@@ -1,0 +1,24 @@
+const {chromium}=require('playwright');
+(async()=>{const b=await chromium.launch();const errs=[];
+async function run(name,vp,mobile){const ctx=await b.newContext({viewport:vp,hasTouch:!!mobile,isMobile:!!mobile});const p=await ctx.newPage();
+  p.on('pageerror',e=>errs.push(name+' PAGEERROR '+e.message));p.on('console',m=>{if(m.type()==='error')errs.push(name+': '+m.text());});
+  await p.goto('file://'+process.cwd()+'/index.html');await p.waitForTimeout(300);await p.click('#m-new');await p.click('#s-go');await p.waitForTimeout(300);
+  await p.evaluate(()=>{closeModal(true);UI.popq=[];});
+  const j=await p.evaluate(()=>{const h=human();const e=G.players.find(q=>q.id!==h.id);declareWar(h.id,e.id);h.met[e.id]=e.met[h.id]=true;h.techs.warfare=true;
+    const a=armiesOf(h.id).find(x=>x.units.some(u=>u.t==='militia'));a.units.push(mkUnit(h,'uu'),mkUnit(h,'uu'));a.mpMax=armyMpMax(a);a.mp=a.mpMax;
+    const t=NBR[a.idx].find(q=>!isWater(q)&&!armyAt(q)&&!cityAt(q)&&G.ter[q]!=='mount');const f=newArmy(e.id,t,[mkUnit(e,'militia'),mkUnit(e,'archer')]);f.units.forEach(u=>u.hp=4);
+    computeVision(h.id);VIS=h._vis;select({type:'army',id:a.id});centerOn(a.idx);return t;});
+  await p.waitForTimeout(150);
+  const pos=await p.evaluate(i=>{const t=tilePos(i);const r=document.getElementById('cv').getBoundingClientRect();return {x:r.left+t.x+VIEW.cw,y:r.top+t.y+VIEW.ch/2};},j);
+  if(mobile)await p.touchscreen.tap(pos.x,pos.y);else await p.mouse.click(pos.x,pos.y);await p.waitForTimeout(200);
+  const prevTxt=await p.evaluate(()=>document.querySelector('#modal')?.innerText.match(/Трофеи[^\n]*/)?.[0]||null);
+  await p.screenshot({path:`shots/${name}-xp-preview.png`});
+  await p.click('#modal [data-act=attack-go]');await p.waitForTimeout(200);
+  const repTxt=await p.evaluate(()=>[...document.querySelectorAll('#modal p')].map(x=>x.innerText).filter(t=>/Трофеи|Повышение/.test(t)));
+  await p.screenshot({path:`shots/${name}-xp-report.png`});
+  await p.evaluate(()=>closeModal(true));await p.waitForTimeout(100);
+  const panel=await p.evaluate(()=>[...document.querySelectorAll('#sidebody .urow .st')].map(x=>x.innerText.split('\n').pop()).slice(0,4));
+  await p.screenshot({path:`shots/${name}-xp-army.png`});
+  console.log(name,JSON.stringify({prevTxt,repTxt,panel}));await ctx.close();}
+await run('desk',{width:1440,height:900},false);await run('mob',{width:390,height:844},true);
+console.log(errs.length?errs.join('\n'):'NO ERRORS');await b.close();})();

@@ -1,0 +1,14 @@
+{
+  "name": "ash-and-aether",
+  "version": "7.0.0",
+  "description": "Пепел и Эфир — пошаговая фэнтези 4X-стратегия в цветном ASCII для браузера",
+  "private": true,
+  "scripts": {
+    "build": "python3 build.py",
+    "test": "sh tests/run-all.sh",
+    "tourney": "node tourney/run.js 3"
+  },
+  "devDependencies": {
+    "playwright": "^1.48.0"
+  }
+}
